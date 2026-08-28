@@ -1,0 +1,466 @@
+-- Project name: qscCrumbs_SyslogPublisher
+-- Plugin name: Q-sys Syslog Publisher
+-- Plugin version: 1.0.0
+-- Author: Dongho Daniel Kwak
+-- Description: This plugin watches user-selected Q-sys controls
+-- and sends out RFC3164 syslog message via UDP socket whenever 
+-- a control status/value is changed.
+
+
+
+-- ###############
+-- Plugin metadata
+PluginInfo = {
+  Name = "qscCrumbs~Syslog Publisher",
+  Version = "1.0.0",
+  BuildVersion = "1.0.0",
+  Id = "7d6d59dd-6774-46ce-a38f-77de9d2fd775",
+  Author = "Crumbs",
+  Description = "Publishes selected Q-sys control changes as RFC3164 UDP syslog messages."
+}
+
+
+
+-- #################
+-- Variable/Constant
+local MAX_NUM_OF_WATCHES = 32
+local PLUGIN_NAME = "qscCrumbs_SyslogPublisher"
+
+
+
+-- #####
+-- Table
+local tabSeverity = {
+  EMERG = 0,
+  ALERT = 1,
+  CRIT = 2,
+  ERR = 3,
+  WARNING = 4,
+  NOTICE = 5,
+  INFO = 6,
+  DEBUG = 7
+}
+
+local tabSeverityChoices = {
+  "Emergency", "Alert", "Critical", "Error",
+  "Warning", "Notice", "Informational", "Debug"
+}
+
+local tabSeverityValue = {
+  Emergency = tabSeverity.EMERG,
+  Alert = tabSeverity.ALERT,
+  Critical = tabSeverity.CRIT,
+  Error = tabSeverity.ERR,
+  Warning = tabSeverity.WARNING,
+  Notice = tabSeverity.NOTICE,
+  Informational = tabSeverity.INFO,
+  Debug = tabSeverity.DEBUG
+}
+
+local tabFacilityChoices = {
+  "Local0", "Local1", "Local2", "Local3",
+  "Local4", "Local5", "Local6", "Local7"
+}
+
+local tabFacilityValue = {
+  Local0 = 16,
+  Local1 = 17,
+  Local2 = 18,
+  Local3 = 19,
+  Local4 = 20,
+  Local5 = 21,
+  Local6 = 22,
+  Local7 = 23
+}
+
+
+
+-- ########
+-- Function
+function funcWatchCount(props)
+  return math.max(1, math.min(MAX_NUM_OF_WATCHES, props["Watch Count"].Value))
+end
+
+function GetColor(props)
+  return {0, 156, 218}
+end
+
+function GetPrettyName(props)
+  return "Q-sys Syslog Publisher v" .. PluginInfo.Version
+end
+
+function GetProperties()
+  return {
+    {
+      Name = "Enabled",
+      Type = "boolean",
+      Value = true,
+      Header = "Syslog"
+    },
+    {
+      Name = "Syslog Server IP",
+      Type = "string",
+      Value = "127.0.0.1",
+      Header = "Syslog"
+    },
+    {
+      Name = "Syslog Port",
+      Type = "integer",
+      Min = 1,
+      Max = 65535,
+      Value = 514,
+      Header = "Syslog"
+    },
+    {
+      Name = "Hostname",
+      Type = "string",
+      Value = "Q-sys-Core",
+      Header = "Syslog"
+    },
+    {
+      Name = "Watch Count",
+      Type = "integer",
+      Min = 1,
+      Max = MAX_NUM_OF_WATCHES,
+      Value = 8,
+      Header = "Watch Interface"
+    },
+    {
+      Name = "Facility",
+      Type = "enum",
+      Choices = tabFacilityChoices,
+      Value = "Local0",
+      Header = "Advanced"
+    }
+  }
+end
+
+function GetControls(props)
+  return {
+    {
+      Name = "Watch Toggle",
+      ControlType = "Button",
+      ButtonType = "Toggle",
+      Count = MAX_NUM_OF_WATCHES,
+      UserPin = false,
+      DefaultValue = false
+    },
+    {
+      Name = "Watch Component",
+      ControlType = "Text",
+      Count = MAX_NUM_OF_WATCHES,
+      UserPin = false,
+      DefaultValue = ""
+    },
+    {
+      Name = "Watch Control",
+      ControlType = "Text",
+      Count = MAX_NUM_OF_WATCHES,
+      UserPin = false,
+      DefaultValue = ""
+    },
+    {
+      Name = "Watch Severity",
+      ControlType = "Text",
+      Count = MAX_NUM_OF_WATCHES,
+      UserPin = false,
+      DefaultValue = "Informational"
+    }
+  }
+end
+
+function GetControlLayout(props)
+  local tabLayout = {}
+  local tabGraphics = {}
+  local varCount = funcWatchCount(props)
+
+  table.insert(tabGraphics, {
+    Type = "Header",
+    Text = "Q-sys Syslog Publisher",
+    Position = {5, 5},
+    Size = {680, 22},
+    FontSize = 16,
+    HTextAlign = "Left"
+  })
+  table.insert(tabGraphics, {
+    Type = "Label",
+    Text = "Index",
+    Position = {4, 45},
+    Size = {35, 16},
+    FontSize = 12,
+    HTextAlign = "Center"
+  })
+  table.insert(tabGraphics, {
+    Type = "Label",
+    Text = "On/Off",
+    Position = {38, 45},
+    Size = {52, 16},
+    FontSize = 12,
+    HTextAlign = "Center"
+  })
+  table.insert(tabGraphics, {
+    Type = "Label",
+    Text = "Component Code Name",
+    Position = {96, 45},
+    Size = {210, 16},
+    FontSize = 12,
+    HTextAlign = "Center"
+  })
+  table.insert(tabGraphics, {
+    Type = "Label",
+    Text = "Control Name",
+    Position = {312, 45},
+    Size = {220, 16},
+    FontSize = 12,
+    HTextAlign = "Center"
+  })
+  table.insert(tabGraphics, {
+    Type = "Label",
+    Text = "Severity",
+    Position = {538, 45},
+    Size = {138, 16},
+    FontSize = 12,
+    HTextAlign = "Center"
+  })
+
+  for index = 1, varCount do
+    local y = 65 + ((index - 1) * 25)
+    local label = tostring(index)
+
+    table.insert(tabGraphics, {
+      Type = "Label",
+      Text = label,
+      Position = {10, y},
+      Size = {22, 20},
+      FontSize = 12,
+      HTextAlign = "Right"
+    })
+    tabLayout["Watch Toggle " .. index] = {
+      PrettyName = "Watch " .. label .. " Toggle",
+      Style = "Button",
+      ButtonStyle = "Toggle",
+      Position = {38, y},
+      Size = {52, 20}
+    }
+    tabLayout["Watch Component " .. index] = {
+      PrettyName = "Watch " .. label .. " Component",
+      Style = "Text",
+      Position = {96, y},
+      Size = {210, 20}
+    }
+    tabLayout["Watch Control " .. index] = {
+      PrettyName = "Watch " .. label .. " Control",
+      Style = "Text",
+      Position = {312, y},
+      Size = {220, 20}
+    }
+    tabLayout["Watch Severity " .. index] = {
+      PrettyName = "Watch " .. label .. " Severity",
+      Style = "ComboBox",
+      Position = {538, y},
+      Size = {138, 20}
+    }
+  end
+
+  return tabLayout, tabGraphics
+end
+
+if Controls then
+  local sock = UdpSocket.New()
+  sock:Open()
+
+  local tabWatches = {}
+
+
+
+  -- ##############
+  -- RFC3164 Syslog
+  local function funcBuildTimestamp()
+    return os.date("%b %d %H:%M:%S")
+  end
+
+  local function funcBuildPriority(facility, severity)
+    return "<" .. tostring((facility * 8) + severity) .. ">"
+  end
+
+  local function funcBuildSyslog(component, control, value, severity)
+    local facilityValue = tabFacilityValue[Properties["Facility"].Value] or tabFacilityValue.Local0
+    local severityValue = tabSeverityValue[severity] or tabSeverity.INFO
+
+    return funcBuildPriority(facilityValue, severityValue)
+      .. funcBuildTimestamp()
+      .. " "
+      .. Properties["Hostname"].Value
+      .. " "
+      .. PLUGIN_NAME .. ":"
+      .. " component=" .. component
+      .. " control=" .. control
+      .. " value=" .. tostring(value)
+  end
+
+  local function funcSendSyslog(component, control, value, severity)
+    if not Properties["Enabled"].Value then
+      return
+    end
+
+    local msg = funcBuildSyslog(component, control, value, severity)
+    print(msg)
+    sock:Send(
+      Properties["Syslog Server IP"].Value,
+      Properties["Syslog Port"].Value,
+      msg
+    )
+  end
+
+
+
+  -- ###################
+  -- Watch Configuration
+  local function funcTrim(name)
+    return tostring(name or ""):match("^%s*(.-)%s*$")
+  end
+
+  local function funcDetachWatch(index)
+    local watch = tabWatches[index]
+
+    if watch and watch.ControlHandle and watch.Handler
+      and watch.ControlHandle.EventHandler == watch.Handler then
+      watch.ControlHandle.EventHandler = nil
+    end
+
+    if watch then
+      watch.EnabledNotified = false
+    end
+
+    tabWatches[index] = nil
+  end
+
+  local function funcConfigureWatch(index)
+    if not Controls["Watch Toggle"][index].Boolean and tabWatches[index] then
+      print("Watch " .. tostring(index) .. " disabled")
+      funcSendSyslog("System", "Watch " .. tostring(index), "Disabled", "Informational")
+      funcDetachWatch(index)
+      return
+    end
+
+    if index > Properties["Watch Count"].Value then
+      funcDetachWatch(index)
+      return
+    end
+
+    local watch = {
+      Component = funcTrim(Controls["Watch Component"][index].String),
+      Control = funcTrim(Controls["Watch Control"][index].String),
+      Severity = Controls["Watch Severity"][index].String,
+      LastValue = nil,
+      ControlHandle = nil,
+      Handler = nil,
+      EnabledNotified = false
+    }
+
+    if watch.Component == "" or watch.Control == "" then
+      return
+    end
+
+    local componentOk, component = pcall(Component.New, watch.Component)
+    if not componentOk or component == nil then
+      print("WARNING: Watch " .. tostring(index)
+        .. " component not found: " .. watch.Component)
+      return
+    end
+
+    local controlOk, control = pcall(function()
+      return component[watch.Control]
+    end)
+    if not controlOk or control == nil then
+      print("WARNING: Watch " .. tostring(index)
+        .. " control not found: " .. watch.Component .. "." .. watch.Control)
+      return
+    end
+
+    print("Watch " .. tostring(index) .. " is configured: "
+      .. watch.Component .. "." .. watch.Control
+      .. " (" .. watch.Severity .. ")"
+    )
+
+    if not Controls["Watch Toggle"][index].Boolean then
+      funcDetachWatch(index)
+      return
+    end
+
+    watch.LastValue = control.String
+    watch.ControlHandle = control
+    watch.Handler = function(changedControl)
+      local value = changedControl.String
+
+      if value == watch.LastValue then
+        return
+      end
+
+      watch.LastValue = value
+      funcSendSyslog(watch.Component, watch.Control, value, watch.Severity)
+    end
+
+    control.EventHandler = watch.Handler
+    tabWatches[index] = watch
+
+    if not watch.EnabledNotified then
+      print("Watch " .. tostring(index) .. " enabled")
+      funcSendSyslog("System", "Watch " .. tostring(index), "Enabled", "Informational")
+      watch.EnabledNotified = true
+    end
+  end
+
+
+
+  -- ################
+  -- Interface Events
+  for index = 1, MAX_NUM_OF_WATCHES do
+    local currentIndex = index
+    local enabled = Controls["Watch Toggle"][currentIndex]
+    local component = Controls["Watch Component"][currentIndex]
+    local control = Controls["Watch Control"][currentIndex]
+    local severity = Controls["Watch Severity"][currentIndex]
+
+    severity.Choices = tabSeverityChoices
+    if severity.String == "" then
+      severity.String = "Informational"
+    end
+
+    enabled.EventHandler = function()
+      funcConfigureWatch(currentIndex)
+    end
+    component.EventHandler = function()
+      funcConfigureWatch(currentIndex)
+    end
+    control.EventHandler = function()
+      funcConfigureWatch(currentIndex)
+    end
+    severity.EventHandler = function()
+      funcConfigureWatch(currentIndex)
+    end
+  end
+
+
+
+  -- ##############
+  -- Initialisation
+  local registered = 0
+  for index = 1, Properties["Watch Count"].Value do
+    funcConfigureWatch(index)
+
+    if tabWatches[index] then
+      registered = registered + 1
+    end
+  end
+
+  print(PLUGIN_NAME .. " v" .. PluginInfo.Version
+    .. " started. Registered watches: " .. tostring(registered))
+
+  funcSendSyslog(
+    "System",
+    "Startup",
+    "PluginStarted",
+    "Informational"
+  )
+end
