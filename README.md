@@ -2,12 +2,12 @@
 ## Description
 Q-sys Syslog Publisher is a Q-sys tool/plugin that **watches** user-selected controls within a running Q-sys design and **generates** and **publishes** syslog messages to an external syslog server.
 
-*Crumbs are transparent (meaning the content/plugin is not hidden/encrypted and the code is opened and visible) tools that try to solve a simple/specific problem while being lightweight.*
-
 <p align="center">
-  <img src="image/demo_q-sys.png" width="45%" vertical-align="middle" alt="Demonstration in Q-sys Designer 10.2" />
-  <img src="image/demo_syslog_server.png" width="45%" vertical-align="middle" alt="Demonstration showing messages in Visual Syslog Server 1.6.4" />
+  <img src="image/demo_q-sys.png" width="45%" style="vertical-align: middle;" alt="Demonstration in Q-sys Designer 10.2" />
+  <img src="image/demo_syslog_server.png" width="45%" style="vertical-align: middle;" alt="Demonstration showing messages in Visual Syslog Server 1.6.4" />
 </p>
+
+*Crumbs are transparent (meaning the content/plugin is not hidden/encrypted and the code is opened and visible) tools that try to solve a simple/specific problem while being lightweight.*
 
 ## Aim
 The aim is to:
