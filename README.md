@@ -7,7 +7,7 @@ Q-sys Syslog Publisher is a Q-sys tool/plugin that **watches** user-selected con
   <img src="image/demo_syslog_server.png" width="45%" style="vertical-align: middle;" alt="Demonstration showing messages in Visual Syslog Server 1.6.4" />
 </p>
 
-*Crumbs are transparent (meaning the content/plugin is not hidden/encrypted and the code is opened and visible) tools that try to solve a simple/specific problem while being lightweight.*
+*Crumbs are transparent and open tools that try to solve a simple/specific problem while being lightweight.*
 
 ## Aim
 The aim is to:
