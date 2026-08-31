@@ -2,12 +2,22 @@
 ## Description
 Q-sys Syslog Publisher is a Q-sys tool/plugin that **watches** user-selected controls within a running Q-sys design and **generates** and **publishes** syslog messages to an external syslog server.
 
-<p align="center">
-  <img src="image/demo_q-sys.png" width="45%" style="vertical-align: middle;" alt="Demonstration in Q-sys Designer 10.2" />
-  <img src="image/demo_syslog_server.png" width="45%" style="vertical-align: middle;" alt="Demonstration showing messages in Visual Syslog Server 1.6.4" />
-</p>
+<table>
+  <tr>
+    <td align="center" valign="middle">
+      <img src="image/demo_q-sys.png" width="90%" style="vertical-align: middle;" alt="Demonstration in Q-SYS Designer 10.2.1" />
+      <br>
+      <em>Demo: Using the Syslog Publisher in Q-sys Designer</em>
+    </td>
+    <td align="center" valign="middle">
+      <img src="image/demo_syslog_server.png" width="90%" style="vertical-align: middle;" alt="Demonstration showing messages in Visual Syslog Server 1.6.4" />
+      <br>
+      <em>Demo: Receiving syslog messages in Visual Syslog Server 1.6.4</em>
+    </td>
+  </tr>
+</table>
 
-*Crumbs are transparent and open tools that try to solve a simple/specific problem while being lightweight.*
+**"Crumbs" are transparent and open tools that try to solve a simple/specific problem while being lightweight.*
 
 ## Aim
 The aim is to:
@@ -26,7 +36,7 @@ This Q-sys tool/plugin enables:
 1. Download the released .qplug file
 2. Double click the file to install the plugin or move the file to the QSC plugin folder, usually found at C:\Users\[username]\Documents\QSC\Q-Sys Designer\Plugins
 
-*The plugin was tested in Q-sys designer v9.13.1 and upwards.*
+**The plugin was tested in Q-sys designer v9.13.1 and above.*
 
 ### Configuration
 #### Properties
